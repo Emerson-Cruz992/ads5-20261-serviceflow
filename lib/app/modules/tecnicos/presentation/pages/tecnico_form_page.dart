@@ -75,7 +75,7 @@ class _TecnicoFormPageState extends State<TecnicoFormPage> {
             const SizedBox(height: AppSizes.md),
             CustomTextField(
               controller: _especialidadeController,
-              label: 'Especialidade (ex: Elétrica)',
+              label: 'Especialidade (ex: Automação Industrial)',
               prefixIcon: AppIcons.build,
             ),
             const SizedBox(height: AppSizes.xl),

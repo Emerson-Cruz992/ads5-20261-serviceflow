@@ -71,6 +71,20 @@ class HomePage extends StatelessWidget {
                         onTap: () =>
                             Navigator.pushNamed(context, '/configuracoes'),
                       ),
+                      CustomMenuCard(
+                        title: 'Técnicos',
+                        description: 'Gestão de Técnicos/Profissionais',
+                        icon: Icons.engineering, // Ou AppIcons.person
+                        color: Colors.orange,
+                        onTap: () => Navigator.pushNamed(context, '/tecnicos'),
+                      ),
+                      CustomMenuCard(
+                        title: 'Serviços',
+                        description: 'Catálogo de preços',
+                        icon: Icons.settings_suggest, // Ou AppIcons.build
+                        color: Colors.blueGrey,
+                        onTap: () => Navigator.pushNamed(context, '/servicos'),
+                      ),
                     ],
                   ),
                 ),

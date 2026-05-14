@@ -11,9 +11,27 @@ import 'modules/clientes/presentation/pages/clientes_list_page.dart';
 import 'modules/ordens_servico/presentation/pages/ordens_servico_page.dart';
 import 'modules/relatorios/presentation/pages/relatorios_page.dart';
 import 'shared/pages/em_desenvolvimento_page.dart';
+
+//importacoes das classes relacionadas aos clientes
 import 'modules/clientes/client.repository.dart';
 import 'modules/clientes/cliente.service.dart';
 import 'modules/clientes/cliente.validation.dart';
+
+//importacoes das classes relacionados ao servico.model
+import 'package:serviceflow/app/modules/servicos/servico.model.dart';
+import 'modules/servicos/servico.service.dart';
+import 'modules/servicos/servico.validation.dart';
+import 'modules/servicos/servico.repository.dart';
+import 'modules/servicos/presentation/pages/servicos_list_page.dart';
+import 'modules/servicos/presentation/pages/servico_form_page.dart';
+
+//importacoes das classes relacionadas ao tecnico.model
+import 'package:serviceflow/app/modules/tecnicos/tecnico.model.dart';
+import 'modules/tecnicos/tecnico.service.dart';
+import 'modules/tecnicos/tecnico.validation.dart';
+import 'modules/tecnicos/tecnico.repository.dart';
+import 'modules/tecnicos/presentation/pages/tecnicos_list_page.dart';
+import 'modules/tecnicos/presentation/pages/tecnico_form_page.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -32,6 +50,12 @@ class AppRoutes {
   static const demoCamera = '/demo-camera';
   static const demoSignature = '/demo-signature';
   static const testIcons = '/test-icons';
+  static const servicos = '/servicos';
+  static const servicoNovo = '/servico/novo';
+  static const servicoEditar = '/servico/editar';
+  static const tecnicos = '/tecnicos';
+  static const tecnicoNovo = '/tecnico/novo';
+  static const tecnicoEditar = '/tecnico/editar';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (_) => const SplashPage(),
@@ -89,5 +113,36 @@ class AppRoutes {
         demoCamera: (context) => const DemoCameraPage(),
         demoSignature: (context) => const DemoSignaturePage(),
         testIcons: (context) => const TestIconsPage(),
+
+        //rotas relacionados aos servicos
+        servicos: (_) {
+          final repo = ServicoRepository();
+          final service = ServicoService(ServicoValidation(repo), repo);
+          return ServicosListPage(service);
+        },
+        servicoNovo: (_) {
+          final repo = ServicoRepository();
+          return ServicoFormPage(ServicoService(ServicoValidation(repo), repo));
+        },
+        servicoEditar: (context) {
+          final repo = ServicoRepository();
+          final servico = ModalRoute.of(context)!.settings.arguments as Servico;
+          return ServicoFormPage(ServicoService(ServicoValidation(repo), repo), servicoParaEdicao: servico);
+        },
+        
+        //rotas relacionadas aos técnicos
+        tecnicos: (_) {
+          final repo = TecnicoRepository();
+          return TecnicosListPage(TecnicoService(TecnicoValidation(repo), repo));
+        },
+        tecnicoNovo: (_) {
+          final repo = TecnicoRepository();
+          return TecnicoFormPage(TecnicoService(TecnicoValidation(repo), repo));
+        },
+        tecnicoEditar: (context) {
+          final repo = TecnicoRepository();
+          final tecnico = ModalRoute.of(context)!.settings.arguments as Tecnico;
+          return TecnicoFormPage(TecnicoService(TecnicoValidation(repo), repo), tecnicoParaEdicao: tecnico);
+        },
       };
 }
