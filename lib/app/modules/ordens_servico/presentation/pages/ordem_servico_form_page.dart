@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.model.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
-import 'dart:io';
 
 /**
  *  Preservação da Arquitetura proposta pela atividade
