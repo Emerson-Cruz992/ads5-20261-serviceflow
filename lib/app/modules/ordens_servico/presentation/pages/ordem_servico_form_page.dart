@@ -4,6 +4,7 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dar
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
+import 'dart:io';
 
 /**
  *  Preservação da Arquitetura proposta pela atividade
@@ -75,6 +76,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text("Dados Principais", style: AppTextStyles.h3),
+
                 const SizedBox(height: 16),
                 
                 // Placeholder para Seleção de Cliente/Técnico
@@ -96,6 +98,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 24),
+
                 const Text("Serviços Realizados", style: AppTextStyles.h3),
                 
                 // Lista dinâmica de itens selecionado
@@ -122,6 +125,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 24),
+
                 CustomTextField(
                   controller: _obsController,
                   label: "Observações Gerais",
@@ -137,7 +141,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 16),
-                
+
                 CustomTextField(
                   controller: _valorPecasController,
                   label: "Valor Total das Peças",
@@ -146,6 +150,65 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 32),
+
+                const SizedBox(height: 24),
+                const Text("Evidências Fotográficas", style: AppTextStyles.h3),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    // Foto Antes
+                    Expanded(
+                      child: _controller.pathFotoAntes == null 
+                        ? ElevatedButton.icon(
+                            onPressed: () async {
+                              await _controller.capturarFoto(true);
+                              setState(() {}); // Atualiza para mostrar o preview
+                            },
+                            icon: const Icon(AppIcons.camera),
+                            label: const Text("Foto Antes"),
+                          )
+                        : Column(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: 1,
+                                child: Image.file(File(_controller.pathFotoAntes!), fit: BoxFit.cover),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _controller.pathFotoAntes = null),
+                                child: const Text("Remover", style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Foto Depois
+                    Expanded(
+                      child: _controller.pathFotoDepois == null 
+                        ? ElevatedButton.icon(
+                            onPressed: () async {
+                              await _controller.capturarFoto(false);
+                              setState(() {});
+                            },
+                            icon: const Icon(AppIcons.camera),
+                            label: const Text("Foto Depois"),
+                          )
+                        : Column(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: 1,
+                                child: Image.file(File(_controller.pathFotoDepois!), fit: BoxFit.cover),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _controller.pathFotoDepois = null),
+                                child: const Text("Remover", style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                    ),
+                  ],
+                ),
+
                 CustomPrimaryButton(
                   text: 'FINALIZAR E SALVAR',
                   icon: AppIcons.save,

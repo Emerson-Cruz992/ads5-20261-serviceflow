@@ -5,6 +5,7 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.repository.
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.validation.dart';
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
+import 'package:image_picker/image_picker.dart';
 
 /**
  * Este controlador será responsável por carregar as opções de seleção e gerir o estado da Ordem 
@@ -24,6 +25,27 @@ class OrdemServicoController extends BaseController<OrdemServico, OrdemServicoRe
 
   void removerServico(int index) {
     itensSelecionados.removeAt(index);
+  }
+
+  //Abaixo, lógica necessária para seleção de imagens - a partir do image picker
+  final ImagePicker _picker = ImagePicker();
+  String? pathFotoAntes;
+  String? pathFotoDepois;
+
+  Future<void> capturarFoto(bool isAntes) async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.camera,
+      // a propriedade abaixo serve para comprimir a imagem.
+      imageQuality: 80,
+    );
+
+    if (image != null) {
+      if (isAntes) {
+        pathFotoAntes = image.path;
+      } else {
+        pathFotoDepois = image.path;
+      }
+    }
   }
 
   @override
