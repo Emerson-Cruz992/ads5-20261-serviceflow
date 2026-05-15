@@ -6,11 +6,6 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.repository.
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.validation.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 
-/**
- * Esta página permite ao técnico visualizar todas as O.S. registadas, filtrando-as ou acompanhando 
- * o seu status de sincronização. Utilizaremos o executeListOperation() do controlador para carregar 
- * os dados do SQLite.
- */
 class OrdensServicoListPage extends BaseController<OrdemServico, OrdemServicoRepository,
     OrdemServicoValidation, OrdemServicoService> {
   OrdensServicoListPage(super.service);
@@ -37,13 +32,16 @@ class _OrdensServicoListViewState extends State<_OrdensServicoListView> {
   @override
   void initState() {
     super.initState();
-    _carregarOrdens();
+    // CORREÇÃO 1: Agendamento pós-frame para exibir o loading com total segurança
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarOrdens();
+    });
   }
 
   Future<void> _carregarOrdens() async {
     final result = await widget.controller.executeListOperation(
       context,
-      widget.service.findAll(), // Busca todas do SQLite 
+      widget.service.findAll(), // Busca os registros físicos do SQLite
       loadingMessage: 'A carregar ordens de serviço...',
     );
     setState(() => _ordens = result);
@@ -61,7 +59,8 @@ class _OrdensServicoListViewState extends State<_OrdensServicoListView> {
       floatingActionButton: CustomFloatingActionButton(
         icon: AppIcons.add,
         tooltip: 'Nova O.S.',
-        onPressed: () => Navigator.pushNamed(context, '/ordem-servico/novo').then((value) {
+        // CORREÇÃO 3: Rota ajustada para coincidir exatamente com a chave '/nova-os' do AppRoutes
+        onPressed: () => Navigator.pushNamed(context, '/nova-os').then((value) {
           if (value == true) _carregarOrdens();
         }),
       ),
@@ -72,7 +71,7 @@ class _OrdensServicoListViewState extends State<_OrdensServicoListView> {
               message: 'Toque no botão + para abrir uma nova ordem de serviço.',
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.sm),
+              padding: const EdgeInsets.all(8.0),
               itemCount: _ordens.length,
               itemBuilder: (context, index) {
                 final os = _ordens[index];
@@ -83,25 +82,36 @@ class _OrdensServicoListViewState extends State<_OrdensServicoListView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Cliente ID: ${os.clienteId}'),
-                      Text('Total: R\$ ${os.valorTotal.toStringAsFixed(2)}', 
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success)),
+                      Text(
+                        'Total: R\$ ${os.valorTotal.toStringAsFixed(2)}', 
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success),
+                      ),
                     ],
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Indicador visual de sincronização
                       Icon(
                         os.isSync == 1 ? AppIcons.cloud : AppIcons.cloudOff,
                         size: 16,
                         color: os.isSync == 1 ? Colors.green : Colors.orange,
                       ),
                       const SizedBox(width: 8),
+                      // CORREÇÃO 2: Lógica de interceptação de clique implementada para gerenciar a O.S.
                       CrudPopupMenuButton<OrdemServico>(
                         item: os,
                         isActive: os.ativo,
                         onSelected: (action) {
-                          // Lógica de detalhes ou edição
+                          if (action == 'editar' || action == 'detalhes') {
+                            // Direciona para a rota de gerenciamento injetando o modelo como envelope
+                            Navigator.pushNamed(
+                              context, 
+                              '/ordem-servico/detalhes', 
+                              arguments: os,
+                            ).then((value) {
+                              if (value == true) _carregarOrdens(); // Recarrega a lista se houver alteração
+                            });
+                          }
                         },
                       ),
                     ],
