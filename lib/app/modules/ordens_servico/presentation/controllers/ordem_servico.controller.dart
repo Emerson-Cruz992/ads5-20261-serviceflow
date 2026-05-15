@@ -85,6 +85,21 @@ class OrdemServicoController extends BaseController<
     );
   }
 
+  // Adicione este método dentro da classe OrdemServicoController existente
+
+  /// Orquestra a atualização e encerramento de uma O.S. em andamento.
+  Future<bool> finalizarOrdemServico(BuildContext context, OrdemServico ordemModificada) async {
+    return await executeCrudOperation(
+      context,
+      service.update(ordemModificada), // Persiste as alterações e a Foto Depois no SQLite
+      loadingMessage: 'Encerrando ordem de serviço...',
+      successMessage: 'O.S. finalizada com sucesso!',
+      requiresConfirmation: true,
+      confirmTitle: 'Concluir Serviço',
+      confirmMessage: 'Deseja realmente encerrar e salvar esta Ordem de Serviço?',
+    );
+  }
+
   @override
   Widget buildPage(BuildContext context, OrdemServicoService service) {
     return const SizedBox.shrink();

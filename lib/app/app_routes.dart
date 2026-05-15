@@ -40,7 +40,9 @@ import 'modules/ordens_servico/ordem_servico.validation.dart';
 import 'modules/ordens_servico/ordem_servico.service.dart';
 import 'modules/ordens_servico/presentation/pages/ordens_servico_list_page.dart';
 import 'modules/ordens_servico/presentation/pages/ordem_servico_form_page.dart';
+import 'modules/ordens_servico/presentation/pages/ordens_servico_detalhes_page.dart';
 import 'modules/dashboard/presentation/pages/dashboard_page.dart';
+import 'modules/ordens_servico/ordem_servico.model.dart';
 
 // Importações para listagem de usuários - Teste Laboratório
 import 'modules/laboratorio/presentation/pages/laboratorio_page.dart';
@@ -103,12 +105,21 @@ class AppRoutes {
           return ClienteFormPage(service, clienteParaEdicao: cliente);
         },
 
-        //Substituição do placeholder pela listagem real de Ordens de Serviço
-        ordensServico: (_) {
+        // Listagem real de Ordens de Serviço (Corrigido para corresponder à HomePage e AppRoutes)
+        '/ordens-servico': (_) {
           final repo = OrdemServicoRepository();
           final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
           return OrdensServicoListPage(service);
         },
+
+        // Gerenciamento e detalhes da Ordem de Serviço selecionada (Mantido em kebab-case)
+        '/ordem-servico/detalhes': (context) {
+          final repo = OrdemServicoRepository();
+          final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
+          final ordem = ModalRoute.of(context)!.settings.arguments as OrdemServico;
+          return OrdemServicoDetalhesPage(service, ordem: ordem);
+        },
+        
         relatorios: (_) => const RelatoriosPage(),
         // Substituição do placeholder pelo formulário real de O.S.
         novaOs: (_) {
