@@ -155,16 +155,16 @@ class AppRoutes {
         testIcons: (context) => const TestIconsPage(),
 
         //rotas relacionados aos servicos
-        servicos: (_) {
+        '/servicos': (_) {
           final repo = ServicoRepository();
           final service = ServicoService(ServicoValidation(repo), repo);
           return ServicosListPage(service);
         },
-        servicoNovo: (_) {
+        '/servico/novo': (_) {
           final repo = ServicoRepository();
           return ServicoFormPage(ServicoService(ServicoValidation(repo), repo));
         },
-        servicoEditar: (context) {
+        'servico/editar': (context) {
           final repo = ServicoRepository();
           final servico = ModalRoute.of(context)!.settings.arguments as Servico;
           return ServicoFormPage(ServicoService(ServicoValidation(repo), repo), servicoParaEdicao: servico);
