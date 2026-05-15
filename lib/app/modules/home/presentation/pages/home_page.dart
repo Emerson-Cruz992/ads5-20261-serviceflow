@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
+import 'package:serviceflow/app/app_routes.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -38,16 +39,14 @@ class HomePage extends StatelessWidget {
                         description: 'Criar e gerenciar OS',
                         icon: Icons.build,
                         color: AppColors.success,
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/ordens-servico'),
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.ordensServico), // Vinculação real
                       ),
                       CustomMenuCard(
                         title: 'Relatórios',
                         description: 'Visualizar relatórios',
                         icon: Icons.bar_chart,
                         color: AppColors.warning,
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/relatorios'),
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.dashboard), // Aponta para o novo Dashboard
                       ),
                       CustomMenuCard(
                         title: 'Laboratório',
@@ -94,7 +93,7 @@ class HomePage extends StatelessWidget {
                     CustomQuickActionButton(
                       icon: Icons.add,
                       label: 'Nova OS',
-                      onTap: () => Navigator.pushNamed(context, '/nova-os'),
+                      onTap: () => Navigator.pushNamed(context, AppRoutes.novaOs), // Vinculação real
                     ),
                     CustomQuickActionButton(
                       icon: Icons.search,
