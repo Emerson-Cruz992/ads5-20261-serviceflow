@@ -52,7 +52,11 @@ class _ClientesListViewState extends State<_ClientesListView> {
   @override
   void initState() {
     super.initState();
-    _carregarClientes();
+    // Agendamento seguro para executar a carga de dados e o loading 
+    // somente após a construção completa da árvore de widgets da página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarClientes();
+    });
   }
 
   Future<void> _carregarClientes() async {

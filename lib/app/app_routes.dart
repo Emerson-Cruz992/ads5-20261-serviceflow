@@ -74,7 +74,7 @@ class AppRoutes {
         home: (_) => const HomePage(),
 
         //Rotas concernentes aos clientes
-        clientes: (_) {
+        '/clientes': (_) {
           final repository = ClienteRepository();
           final validation = ClienteValidation(repository);
           final service = ClienteService(validation, repository);
