@@ -73,6 +73,18 @@ class OrdemServicoController extends BaseController<
     signatureController.dispose(); // [cite: 509]
   }
 
+  Future<bool> salvarNovaOrdem(BuildContext context, OrdemServico novaOS) async {
+    return await executeCrudOperation(
+      context,
+      service.create(novaOS),
+      loadingMessage: 'Salvando Ordem de Serviço...',
+      successMessage: 'O.S. criada com sucesso!',
+      requiresConfirmation: true,
+      confirmTitle: 'Confirmar Abertura',
+      confirmMessage: 'Deseja abrir esta Ordem de Serviço?',
+    );
+  }
+
   @override
   Widget buildPage(BuildContext context, OrdemServicoService service) {
     return const SizedBox.shrink();

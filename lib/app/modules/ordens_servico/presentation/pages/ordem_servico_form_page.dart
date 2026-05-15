@@ -9,6 +9,13 @@ import 'package:serviceflow/app/shared/widgets/widgets.dart';
 import 'package:signature/signature.dart';
 import 'package:image_picker/image_picker.dart';
 
+// Inclusão dos repositórios e modelos necessários para as consultas reais do banco
+import 'package:serviceflow/app/modules/clientes/client.repository.dart';
+import 'package:serviceflow/app/modules/clientes/cliente.model.dart';
+import 'package:serviceflow/app/modules/tecnicos/tecnico.repository.dart';
+import 'package:serviceflow/app/modules/tecnicos/tecnico.model.dart';
+import 'package:serviceflow/app/modules/servicos/servico.repository.dart';
+
 class OrdemServicoFormPage extends StatefulWidget {
   final OrdemServicoService service;
   const OrdemServicoFormPage(this.service, {super.key});
@@ -23,10 +30,18 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   final _pecasController = TextEditingController();
   final _valorPecasController = TextEditingController();
 
-  // Estado mutável movido com sucesso para o State local (Solução must_be_immutable)
+  // Instanciação dos repositórios para acesso direto aos dados locais
+  final ClienteRepository _clienteRepo = ClienteRepository();
+  final TecnicoRepository _tecnicoRepo = TecnicoRepository();
+  final ServicoRepository _servicoRepo = ServicoRepository();
+
+  // Coleções dinâmicas que alimentarão os seletores da interface
+  List<Cliente> _clientesDisponiveis = [];
+  List<Tecnico> _tecnicosDisponiveis = [];
+  List<Servico> _servicosDisponiveis = [];
+
   final List<Servico> _itensSelecionados = [];
-  String? _pathFotoAntes;
-  String? _pathFotoDepois;
+  String? _pathFotoAntes; 
   late SignatureController _signatureController;
   Uint8List? _assinaturaBytes;
   
@@ -45,6 +60,11 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       penColor: Colors.black,
       exportBackgroundColor: Colors.white,
     );
+
+    // Dispara a carga assíncrona dos registros reais logo após o desenho do layout básico
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarDadosDeApoio();
+    });
   }
 
   @override
@@ -52,11 +72,83 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     _obsController.dispose();
     _pecasController.dispose();
     _valorPecasController.dispose();
-    _signatureController.dispose(); // Liberação nativa de recursos local
+    _signatureController.dispose();
     super.dispose();
   }
 
-  Future<void> _capturarFoto(bool isAntes) async {
+  /// Consulta as tabelas do SQLite filtrando apenas as entidades ativas no sistema
+  Future<void> _carregarDadosDeApoio() async {
+    try {
+      final clientes = await _clienteRepo.findAll();
+      final tecnicos = await _tecnicoRepo.findAll();
+      final servicos = await _servicoRepo.findAll();
+
+      setState(() {
+        _clientesDisponiveis = clientes.where((c) => c.ativo).toList();
+        _tecnicosDisponiveis = tecnicos.where((t) => t.ativo).toList();
+        _servicosDisponiveis = servicos.where((s) => s.ativo).toList();
+      });
+    } catch (e) {
+      _controller.showError(context, "Erro ao carregar dados dos cadastros de apoio.");
+    }
+  }
+
+  /// Apresenta uma caixa de diálogo contendo os serviços ativos do catálogo de preços
+  void _exibirSeletorServicos() {
+    if (_servicosDisponiveis.isEmpty) {
+      _controller.showError(context, "Nenhum serviço ativo encontrado no catálogo.");
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        Servico? servicoSelecionado = _servicosDisponiveis.first;
+        
+        return AlertDialog(
+          title: const Text("Selecionar Serviço"),
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return DropdownButtonFormField<Servico>(
+                value: servicoSelecionado,
+                decoration: const InputDecoration(labelText: 'Serviço disponível'),
+                items: _servicosDisponiveis.map((s) {
+                  return DropdownMenuItem<Servico>(
+                    value: s,
+                    child: Text("${s.descricao} (R\$ ${s.preco.toStringAsFixed(2)})"),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setDialogState(() {
+                    servicoSelecionado = value;
+                  });
+                },
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (servicoSelecionado != null) {
+                  setState(() {
+                    _itensSelecionados.add(servicoSelecionado!);
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text("Adicionar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _capturarFoto() async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
@@ -64,11 +156,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       );
       if (image != null) {
         setState(() {
-          if (isAntes) {
-            _pathFotoAntes = image.path;
-          } else {
-            _pathFotoDepois = image.path;
-          }
+          _pathFotoAntes = image.path;
         });
       }
     } catch (e) {
@@ -98,7 +186,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       return;
     }
 
-    // Garante a exportação dos bytes antes de enviar para persistência
     await _exportarAssinatura();
 
     final novaOS = OrdemServico(
@@ -109,19 +196,11 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       pecasAplicadas: _pecasController.text,
       valorPecas: double.tryParse(_valorPecasController.text) ?? 0.0,
       fotoAntes: _pathFotoAntes,
-      fotoDepois: _pathFotoDepois,
-      assinatura: _assinaturaBytes != null ? _assinaturaBytes.hashCode.toString() : null, // Simulação de hash/string do path
+      fotoDepois: null, 
+      assinatura: _assinaturaBytes != null ? _assinaturaBytes.hashCode.toString() : null,
     );
 
-    final sucesso = await _controller.executeCrudOperation(
-      context,
-      widget.service.create(novaOS),
-      loadingMessage: 'Salvando Ordem de Serviço...',
-      successMessage: 'O.S. criada com sucesso!',
-      requiresConfirmation: true,
-      confirmTitle: 'Confirmar Abertura',
-      confirmMessage: 'Deseja abrir esta Ordem de Serviço?',
-    );
+    final sucesso = await _controller.salvarNovaOrdem(context, novaOS);
 
     if (sucesso) Navigator.pop(context, true);
   }
@@ -141,18 +220,40 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 const Text("Dados Principais", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
                 
-                ListTile(
-                  title: Text(_clienteId == null ? "Selecionar Cliente" : "Cliente ID: $_clienteId"),
-                  leading: const Icon(AppIcons.person),
-                  onTap: () => setState(() => _clienteId = 1),
-                  tileColor: Colors.grey[100],
+                // Campo dinâmico e real para seleção do Cliente cadastrado
+                DropdownButtonFormField<int>(
+                  value: _clienteId,
+                  decoration: const InputDecoration(
+                    labelText: 'Selecionar Cliente',
+                    prefixIcon: Icon(AppIcons.person),
+                  ),
+                  items: _clientesDisponiveis.map((cliente) {
+                    return DropdownMenuItem<int>(
+                      value: cliente.id,
+                      child: Text(cliente.nome),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _clienteId = value),
+                  validator: (value) => value == null ? 'Por favor, selecione um cliente' : null,
                 ),
-                const SizedBox(height: 8),
-                ListTile(
-                  title: Text(_tecnicoId == null ? "Selecionar Técnico" : "Técnico ID: $_tecnicoId"),
-                  leading: const Icon(AppIcons.handyman),
-                  onTap: () => setState(() => _tecnicoId = 1),
-                  tileColor: Colors.grey[100],
+                
+                const SizedBox(height: 16),
+
+                // Campo dinâmico e real para seleção do Técnico cadastrado
+                DropdownButtonFormField<int>(
+                  value: _tecnicoId,
+                  decoration: const InputDecoration(
+                    labelText: 'Selecionar Técnico',
+                    prefixIcon: Icon(AppIcons.handyman),
+                  ),
+                  items: _tecnicosDisponiveis.map((tecnico) {
+                    return DropdownMenuItem<int>(
+                      value: tecnico.id,
+                      child: Text(tecnico.nome),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _tecnicoId = value),
+                  validator: (value) => value == null ? 'Por favor, selecione um técnico' : null,
                 ),
 
                 const SizedBox(height: 24),
@@ -169,12 +270,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   );
                 }),
                 
+                // Botão reconfigurado para acionar a busca real de serviços ativos no catálogo
                 TextButton.icon(
-                  onPressed: () {
-                    setState(() => _itensSelecionados.add(
-                      Servico(id: 1, descricao: "Manutenção Preventiva", preco: 150.0)
-                    ));
-                  },
+                  onPressed: _exibirSeletorServicos,
                   icon: const Icon(Icons.add),
                   label: const Text("Adicionar Serviço"),
                 ),
@@ -192,33 +290,27 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 24),
-                const Text("Evidências Fotográficas", style: AppTextStyles.h3),
+                const Text("Evidência Fotográfica Inicial", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _pathFotoAntes == null 
-                        ? ElevatedButton.icon(
-                            onPressed: () => _capturarFoto(true),
-                            icon: const Icon(AppIcons.camera),
-                            label: const Text("Foto Antes"),
-                          )
-                        : Column(
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 1,
-                                child: Image.file(File(_pathFotoAntes!), fit: BoxFit.cover),
-                              ),
-                              TextButton(
-                                onPressed: () => setState(() => _pathFotoAntes = null),
-                                child: const Text("Remover", style: TextStyle(color: Colors.red)),
-                              ),
-                            ],
-                          ),
+                
+                _pathFotoAntes == null 
+                  ? ElevatedButton.icon(
+                      onPressed: _capturarFoto,
+                      icon: const Icon(AppIcons.camera),
+                      label: const Text("Registrar Estado Inicial (Antes)"),
+                    )
+                  : Column(
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: Image.file(File(_pathFotoAntes!), fit: BoxFit.cover),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(() => _pathFotoAntes = null),
+                          child: const Text("Remover Foto", style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),                    
-                  ],
-                ),
 
                 const SizedBox(height: 24),
                 const Text("Assinatura do Cliente", style: AppTextStyles.h3),

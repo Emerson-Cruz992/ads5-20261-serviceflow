@@ -35,8 +35,8 @@ class HomePage extends StatelessWidget {
                         onTap: () => Navigator.pushNamed(context, '/clientes'),
                       ),
                       CustomMenuCard(
-                        title: 'Ordens de\nServiço',
-                        description: 'Criar e gerenciar OS',
+                        title: 'OS\'s',
+                        description: 'Gerenciar OS',
                         icon: Icons.build,
                         color: AppColors.success,
                         onTap: () => Navigator.pushNamed(context, AppRoutes.ordensServico), // Vinculação real
@@ -50,7 +50,7 @@ class HomePage extends StatelessWidget {
                       ),
                       CustomMenuCard(
                         title: 'Laboratório',
-                        description: 'Testes de Hardware e Dados',
+                        description: 'Funções Experimentais',
                         icon: Icons.science,
                         color: Colors.purple,
                         onTap: () => Navigator.pushNamed(context, '/laboratorio/usuarios'),
@@ -64,7 +64,7 @@ class HomePage extends StatelessWidget {
                       // ),
                       CustomMenuCard(
                         title: 'Configurações',
-                        description: 'Configurações do sistema',
+                        description: 'Gerencie configs.',
                         icon: Icons.settings,
                         color: Colors.grey,
                         onTap: () =>
@@ -72,7 +72,7 @@ class HomePage extends StatelessWidget {
                       ),
                       CustomMenuCard(
                         title: 'Técnicos',
-                        description: 'Gestão de Técnicos/Profissionais',
+                        description: 'Gestão de Profissionais',
                         icon: Icons.engineering, // Ou AppIcons.person
                         color: Colors.orange,
                         onTap: () => Navigator.pushNamed(context, '/tecnicos'),
