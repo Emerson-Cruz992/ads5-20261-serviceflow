@@ -216,27 +216,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                             ],
                           ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _pathFotoDepois == null 
-                        ? ElevatedButton.icon(
-                            onPressed: () => _capturarFoto(false),
-                            icon: const Icon(AppIcons.camera),
-                            label: const Text("Foto Depois"),
-                          )
-                        : Column(
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 1,
-                                child: Image.file(File(_pathFotoDepois!), fit: BoxFit.cover),
-                              ),
-                              TextButton(
-                                onPressed: () => setState(() => _pathFotoDepois = null),
-                                child: const Text("Remover", style: TextStyle(color: Colors.red)),
-                              ),
-                            ],
-                          ),
-                    ),
+                    const SizedBox(width: 16),                    
                   ],
                 ),
 

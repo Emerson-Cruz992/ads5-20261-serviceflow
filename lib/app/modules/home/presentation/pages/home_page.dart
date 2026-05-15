@@ -55,13 +55,13 @@ class HomePage extends StatelessWidget {
                         color: Colors.purple,
                         onTap: () => Navigator.pushNamed(context, '/laboratorio/usuarios'),
                       ),
-                      CustomMenuCard(
-                        title: 'Estoque',
-                        description: 'Controle de produtos',
-                        icon: Icons.inventory,
-                        color: Colors.teal,
-                        onTap: () => Navigator.pushNamed(context, '/estoque'),
-                      ),
+                      // CustomMenuCard(
+                      //   title: 'Estoque',
+                      //   description: 'Controle de produtos',
+                      //   icon: Icons.inventory,
+                      //   color: Colors.teal,
+                      //   onTap: () => Navigator.pushNamed(context, '/estoque'),
+                      // ),
                       CustomMenuCard(
                         title: 'Configurações',
                         description: 'Configurações do sistema',

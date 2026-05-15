@@ -171,6 +171,7 @@ class AppRoutes {
           final repo = ServicoRepository();
           return ServicoFormPage(ServicoService(ServicoValidation(repo), repo));
         },
+        
         // Rota de edição de serviços corrigida
         '/servico/editar': (context) {
           final repository = ServicoRepository();
