@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:serviceflow/app/core/base/base.controller.dart';
 import 'package:serviceflow/app/modules/tecnicos/tecnico.model.dart';
 import 'package:serviceflow/app/modules/tecnicos/tecnico.service.dart';
-import 'package:serviceflow/app/modules/tecnicos/presentation/controllers/tecnico.controller.dart';
+import 'package:serviceflow/app/modules/tecnicos/tecnico.repository.dart';
+import 'package:serviceflow/app/modules/tecnicos/tecnico.validation.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 
 /**
@@ -10,7 +12,8 @@ import 'package:serviceflow/app/shared/widgets/widgets.dart';
  * exibição de mensagens caso ococrra algum erro na base de dados SQLite. A interface utiliza o
  * CustomListCard para manter a consistência visual com o restante da aplicação
  */
-class TecnicosListPage extends TecnicoController {
+class TecnicosListPage extends BaseController<Tecnico, TecnicoRepository,
+    TecnicoValidation, TecnicoService> {
   TecnicosListPage(super.service);
 
   @override
@@ -35,29 +38,45 @@ class _TecnicosListViewState extends State<_TecnicosListView> {
   @override
   void initState() {
     super.initState();
-    _carregarTecnicos();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarTecnicos();
+    });
   }
 
   Future<void> _carregarTecnicos() async {
     final result = await widget.controller.executeListOperation(
       context,
-      widget.service.findAllActive(),
-      loadingMessage: 'Carregando técnicos disponíveis...',
+      widget.service.findAll(),
+      loadingMessage: 'Carregando equipe técnica...',
     );
     setState(() => _tecnicos = result);
+  }
+
+  Future<void> _excluirTecnico(Tecnico tecnico) async {
+    if (tecnico.id == null) return;
+
+    final sucesso = await widget.controller.executeCrudOperation(
+      context,
+      widget.service.delete(tecnico.id!), // Invoca a remoção na base local
+      loadingMessage: 'Removendo técnico...',
+      successMessage: 'Técnico removido com sucesso!',
+    );
+
+    if (sucesso) _carregarTecnicos(); // Recarrega a listagem atualizada
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Técnicos'),
+        title: const Text('Equipe de Técnicos'),
         actions: [
-          IconButton(icon: Icon(AppIcons.refresh), onPressed: _carregarTecnicos),
+          IconButton(icon: const Icon(AppIcons.refresh), onPressed: _carregarTecnicos),
         ],
       ),
       floatingActionButton: CustomFloatingActionButton(
         icon: AppIcons.add,
+        tooltip: 'Novo Técnico',
         onPressed: () => Navigator.pushNamed(context, '/tecnico/novo').then((value) {
           if (value == true) _carregarTecnicos();
         }),
@@ -65,41 +84,42 @@ class _TecnicosListViewState extends State<_TecnicosListView> {
       body: _tecnicos.isEmpty
           ? const CustomEmptyStateCard(
               icon: AppIcons.person,
-              title: 'Nenhum técnico encontrado!',
-              message: 'Toque no botão + para registar o primeiro técnico.',
+              title: 'Nenhum técnico cadastrado',
+              message: 'Toque no botão + para adicionar profissionais à equipe.',
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.sm),
+              padding: const EdgeInsets.all(8.0),
               itemCount: _tecnicos.length,
               itemBuilder: (context, index) {
                 final tecnico = _tecnicos[index];
+                
                 return CustomListCard(
-                  leading: CustomAvatarCard(initials: tecnico.nome[0]),
-                  title: Text(tecnico.nome, style: AppTextStyles.h4),
-                  subtitle: Text(tecnico.especialidade ?? 'Geral'),
+                  // Indicativo visual de ativo/inativo repassado para o card
+                  isActive: tecnico.ativo, 
+                  // Exibição combinada do ID do técnico junto ao seu nome
+                  title: Text(
+                    '#${tecnico.id} - ${tecnico.nome}', 
+                    style: AppTextStyles.h4.copyWith(
+                      color: tecnico.ativo ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                  subtitle: Text(tecnico.ativo ? 'Disponível' : 'Inativo / Afastado'),
                   trailing: CrudPopupMenuButton<Tecnico>(
                     item: tecnico,
                     isActive: tecnico.ativo,
-                    onSelected: (action) => _handleAction(action, tecnico),
+                    onSelected: (action) {
+                      if (action == 'editar') {
+                        Navigator.pushNamed(context, '/tecnico/editar', arguments: tecnico).then((value) {
+                          if (value == true) _carregarTecnicos();
+                        });
+                      } else if (action == 'excluir') {
+                        _excluirTecnico(tecnico);
+                      }
+                    },
                   ),
                 );
               },
             ),
     );
   }
-
-  void _handleAction(String action, Tecnico tecnico) {
-  if (action == 'editar') {
-    Navigator.pushNamed(
-      context, 
-      '/tecnico/editar', 
-      arguments: tecnico,
-    ).then((value) {
-      // Usando chaves para permitir instruções como o 'if'
-      if (value == true) {
-        _carregarTecnicos();
-      }
-    });
-  }
-}
 }

@@ -171,15 +171,15 @@ class AppRoutes {
         },
         
         //rotas relacionadas aos técnicos
-        tecnicos: (_) {
+        '/tecnicos': (_) {
           final repo = TecnicoRepository();
           return TecnicosListPage(TecnicoService(TecnicoValidation(repo), repo));
         },
-        tecnicoNovo: (_) {
+        '/tecnico/novo': (_) {
           final repo = TecnicoRepository();
           return TecnicoFormPage(TecnicoService(TecnicoValidation(repo), repo));
         },
-        tecnicoEditar: (context) {
+        '/tecnico/editar': (context) {
           final repo = TecnicoRepository();
           final tecnico = ModalRoute.of(context)!.settings.arguments as Tecnico;
           return TecnicoFormPage(TecnicoService(TecnicoValidation(repo), repo), tecnicoParaEdicao: tecnico);
