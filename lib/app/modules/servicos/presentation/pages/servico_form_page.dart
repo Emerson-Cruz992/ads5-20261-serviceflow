@@ -62,7 +62,7 @@ class _ServicoFormPageState extends State<ServicoFormPage> {
     final precoConvertido = double.tryParse(_precoController.text) ?? 0.0;
 
     final servico = Servico(
-      id: widget.servicoParaEdicao?.id,
+      id: widget.servicoParaEdicao?.id, 
       descricao: _descricaoController.text,
       preco: precoConvertido,
       ativo: widget.servicoParaEdicao?.ativo ?? true,
@@ -71,10 +71,10 @@ class _ServicoFormPageState extends State<ServicoFormPage> {
 
     final isUpdate = widget.servicoParaEdicao != null;
     final operation = isUpdate ? widget.service.update(servico) : widget.service.create(servico);
-
+    
     final sucesso = await _controller.executeCrudOperation(
       context,
-      operation as Future<void>,
+      operation, // Passado diretamente sem coerção de tipo
       loadingMessage: 'Salvando item no catálogo...',
       successMessage: 'Serviço salvo com sucesso!',
     );

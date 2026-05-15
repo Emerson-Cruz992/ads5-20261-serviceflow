@@ -8,7 +8,6 @@ import 'modules/splash/presentation/pages/splash_page.dart';
 import 'modules/auth/presentation/pages/login_page.dart';
 import 'modules/home/presentation/pages/home_page.dart';
 import 'modules/clientes/presentation/pages/clientes_list_page.dart';
-import 'modules/ordens_servico/presentation/pages/ordens_servico_page.dart';
 import 'modules/relatorios/presentation/pages/relatorios_page.dart';
 import 'shared/pages/em_desenvolvimento_page.dart';
 
@@ -42,6 +41,14 @@ import 'modules/ordens_servico/ordem_servico.service.dart';
 import 'modules/ordens_servico/presentation/pages/ordens_servico_list_page.dart';
 import 'modules/ordens_servico/presentation/pages/ordem_servico_form_page.dart';
 import 'modules/dashboard/presentation/pages/dashboard_page.dart';
+
+// Importações para listagem de usuários - Teste Laboratório
+import 'modules/laboratorio/presentation/pages/laboratorio_page.dart';
+import 'modules/laboratorio/presentation/pages/usuarios_list_pages.dart';
+import 'modules/usuarios/usuario.repository.dart';
+import 'modules/usuarios/usuario.validation.dart';
+import 'modules/usuarios/usuario.service.dart';
+
 
 class AppRoutes {
   static const splash = '/splash';
@@ -164,10 +171,14 @@ class AppRoutes {
           final repo = ServicoRepository();
           return ServicoFormPage(ServicoService(ServicoValidation(repo), repo));
         },
-        'servico/editar': (context) {
-          final repo = ServicoRepository();
-          final servico = ModalRoute.of(context)!.settings.arguments as Servico;
-          return ServicoFormPage(ServicoService(ServicoValidation(repo), repo), servicoParaEdicao: servico);
+        // Rota de edição de serviços corrigida
+        '/servico/editar': (context) {
+          final repository = ServicoRepository();
+          final validation = ServicoValidation(repository);
+          final service = ServicoService(validation, repository);          
+          // Captura e realiza o cast correto do objeto vindo da listagem
+          final servico = ModalRoute.of(context)!.settings.arguments as Servico;          
+          return ServicoFormPage(service, servicoParaEdicao: servico);
         },
         
         //rotas relacionadas aos técnicos
@@ -183,6 +194,16 @@ class AppRoutes {
           final repo = TecnicoRepository();
           final tecnico = ModalRoute.of(context)!.settings.arguments as Tecnico;
           return TecnicoFormPage(TecnicoService(TecnicoValidation(repo), repo), tecnicoParaEdicao: tecnico);
+        },
+
+        //rota para o teste de listagem de usuário
+        '/laboratorio': (_) => const LaboratorioPage(),
+        // Sub-rota para exibição da listagem de testes de usuários locais
+        '/laboratorio/usuarios': (_) {
+          final repository = UsuarioRepository();
+          final validation = UsuarioValidation(repository);
+          final service = UsuarioService(validation, repository);
+          return UsuariosListPage(service);
         },
       };
 }

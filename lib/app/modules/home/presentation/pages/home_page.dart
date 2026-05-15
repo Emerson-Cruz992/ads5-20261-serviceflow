@@ -50,10 +50,10 @@ class HomePage extends StatelessWidget {
                       ),
                       CustomMenuCard(
                         title: 'Laboratório',
-                        description: 'Testes de hardware',
+                        description: 'Testes de Hardware e Dados',
                         icon: Icons.science,
                         color: Colors.purple,
-                        onTap: () => Navigator.pushNamed(context, '/menu-lab'),
+                        onTap: () => Navigator.pushNamed(context, '/laboratorio/usuarios'),
                       ),
                       CustomMenuCard(
                         title: 'Estoque',
