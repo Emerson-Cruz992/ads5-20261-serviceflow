@@ -5,9 +5,13 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dar
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
+import 'package:signature/signature.dart';
 
 /**
- *  Preservação da Arquitetura proposta pela atividade
+ *  Preservação da Arquitetura proposta pela atividade:
+ *  Na OrdemServicoFormPage, utilizaremos um operador ternário para substituir o botão de captura 
+ *  por uma miniatura (thumbnail) da foto assim que ela for tirada. Para exibir imagens locais a 
+ *  partir do caminho (path), utilizamos o widget Image.file().
  */
 class OrdemServicoFormPage extends StatefulWidget {
   final OrdemServicoService service;
@@ -33,6 +37,14 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   void initState() {
     super.initState();
     _controller = OrdemServicoController(widget.service);
+    _controller.initSignature(); // inicializa o canvas da assinatura
+  }
+
+  //chama o método dispose para fazer a liberação de memória
+  @override
+  void dispose(){
+    _controller.disposeSignature();
+    super.dispose();
   }
 
   Future<void> _salvarOS() async {
@@ -151,10 +163,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
 
                 const SizedBox(height: 32),
 
+                //WIDGET PARA TIRAR FOTOS ANTES E DEPOIS
                 const SizedBox(height: 24),
                 const Text("Evidências Fotográficas", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
-
                 Row(
                   children: [
                     // Foto Antes
@@ -205,6 +217,40 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                               ),
                             ],
                           ),
+                    ),
+                  ],
+                ),
+
+                //WIDGET DA ASSINATURA
+                const SizedBox(height: 24),
+                const Text("Assinatura do Cliente", style: AppTextStyles.h3),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.border),
+                    color: AppColors.light, // [cite: 549]
+                  ),
+                  child: Signature(
+                    controller: _controller.signatureController,
+                    height: 150,
+                    backgroundColor: AppColors.light,
+                  ), // [cite: 512-515]
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => setState(() => _controller.limparAssinatura()),
+                      icon: const Icon(AppIcons.clear, color: AppColors.danger),
+                      label: const Text("Limpar", style: TextStyle(color: AppColors.danger)),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        await _controller.exportarAssinatura();
+                        setState(() {}); // Bloqueia ou mostra preview se desejar
+                      },
+                      icon: const Icon(AppIcons.check, color: AppColors.success),
+                      label: const Text("Confirmar Assinatura", style: TextStyle(color: AppColors.success)),
                     ),
                   ],
                 ),
