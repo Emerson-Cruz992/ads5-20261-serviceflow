@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:serviceflow/app/core/base/base.controller.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.model.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
-import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
+import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.repository.dart';
+import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.validation.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 
-class OrdensServicoListPage extends OrdemServicoController {
+/**
+ * Esta página permite ao técnico visualizar todas as O.S. registadas, filtrando-as ou acompanhando 
+ * o seu status de sincronização. Utilizaremos o executeListOperation() do controlador para carregar 
+ * os dados do SQLite.
+ */
+class OrdensServicoListPage extends BaseController<OrdemServico, OrdemServicoRepository,
+    OrdemServicoValidation, OrdemServicoService> {
   OrdensServicoListPage(super.service);
 
   @override

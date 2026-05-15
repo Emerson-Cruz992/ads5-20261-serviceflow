@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:typed_data'; // Essencial para o Uint8List
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.model.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 import 'package:signature/signature.dart';
+import 'package:image_picker/image_picker.dart';
 
-/**
- *  Preservação da Arquitetura proposta pela atividade:
- *  Na OrdemServicoFormPage, utilizaremos um operador ternário para substituir o botão de captura 
- *  por uma miniatura (thumbnail) da foto assim que ela for tirada. Para exibir imagens locais a 
- *  partir do caminho (path), utilizamos o widget Image.file().
- */
 class OrdemServicoFormPage extends StatefulWidget {
   final OrdemServicoService service;
   const OrdemServicoFormPage(this.service, {super.key});
@@ -26,10 +22,17 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   final _obsController = TextEditingController();
   final _pecasController = TextEditingController();
   final _valorPecasController = TextEditingController();
+
+  // Estado mutável movido com sucesso para o State local (Solução must_be_immutable)
+  final List<Servico> _itensSelecionados = [];
+  String? _pathFotoAntes;
+  String? _pathFotoDepois;
+  late SignatureController _signatureController;
+  Uint8List? _assinaturaBytes;
   
-  late final OrdemServicoController _controller;
+  final ImagePicker _picker = ImagePicker();
+  late final OrdemServicoController _controller;  
   
-  // IDs selecionados (em um cenário real, viriam de um Dropdown ou Busca)
   int? _clienteId;
   int? _tecnicoId;
 
@@ -37,14 +40,56 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   void initState() {
     super.initState();
     _controller = OrdemServicoController(widget.service);
-    _controller.initSignature(); // inicializa o canvas da assinatura
+    _signatureController = SignatureController(
+      penStrokeWidth: 3,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
+    );
   }
 
-  //chama o método dispose para fazer a liberação de memória
   @override
-  void dispose(){
-    _controller.disposeSignature();
+  void dispose() {
+    _obsController.dispose();
+    _pecasController.dispose();
+    _valorPecasController.dispose();
+    _signatureController.dispose(); // Liberação nativa de recursos local
     super.dispose();
+  }
+
+  Future<void> _capturarFoto(bool isAntes) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        setState(() {
+          if (isAntes) {
+            _pathFotoAntes = image.path;
+          } else {
+            _pathFotoDepois = image.path;
+          }
+        });
+      }
+    } catch (e) {
+      _controller.showError(context, "Erro ao acessar a câmara.");
+    }
+  }
+
+  void _limparAssinatura() {
+    _signatureController.clear();
+    setState(() {
+      _assinaturaBytes = null;
+    });
+  }
+
+  Future<void> _exportarAssinatura() async {
+    if (_signatureController.isNotEmpty) {
+      final bytes = await _signatureController.toPngBytes();
+      setState(() {
+        _assinaturaBytes = bytes;
+      });
+    }
   }
 
   Future<void> _salvarOS() async {
@@ -53,13 +98,19 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       return;
     }
 
+    // Garante a exportação dos bytes antes de enviar para persistência
+    await _exportarAssinatura();
+
     final novaOS = OrdemServico(
       clienteId: _clienteId!,
       tecnicoId: _tecnicoId!,
-      itens: _controller.itensSelecionados,
+      itens: _itensSelecionados,
       observacao: _obsController.text,
       pecasAplicadas: _pecasController.text,
       valorPecas: double.tryParse(_valorPecasController.text) ?? 0.0,
+      fotoAntes: _pathFotoAntes,
+      fotoDepois: _pathFotoDepois,
+      assinatura: _assinaturaBytes != null ? _assinaturaBytes.hashCode.toString() : null, // Simulação de hash/string do path
     );
 
     final sucesso = await _controller.executeCrudOperation(
@@ -88,47 +139,39 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text("Dados Principais", style: AppTextStyles.h3),
-
                 const SizedBox(height: 16),
                 
-                // Placeholder para Seleção de Cliente/Técnico
-                // Em implementação real, usar CustomDropdown ou campos de busca
                 ListTile(
                   title: Text(_clienteId == null ? "Selecionar Cliente" : "Cliente ID: $_clienteId"),
                   leading: const Icon(AppIcons.person),
-                  onTap: () => setState(() => _clienteId = 1), // Simulação
+                  onTap: () => setState(() => _clienteId = 1),
                   tileColor: Colors.grey[100],
                 ),
-
                 const SizedBox(height: 8),
-
                 ListTile(
                   title: Text(_tecnicoId == null ? "Selecionar Técnico" : "Técnico ID: $_tecnicoId"),
                   leading: const Icon(AppIcons.handyman),
-                  onTap: () => setState(() => _tecnicoId = 1), // Simulação
+                  onTap: () => setState(() => _tecnicoId = 1),
                   tileColor: Colors.grey[100],
                 ),
 
                 const SizedBox(height: 24),
-
                 const Text("Serviços Realizados", style: AppTextStyles.h3),
                 
-                // Lista dinâmica de itens selecionado
-                ..._controller.itensSelecionados.asMap().entries.map((entry) {
+                ..._itensSelecionados.asMap().entries.map((entry) {
                   return CustomListCard(
                     title: Text(entry.value.descricao),
                     subtitle: Text("R\$ ${entry.value.preco}"),
                     trailing: IconButton(
                       icon: const Icon(Icons.remove_circle, color: Colors.red),
-                      onPressed: () => setState(() => _controller.removerServico(entry.key)),
+                      onPressed: () => setState(() => _itensSelecionados.removeAt(entry.key)),
                     ),
                   );
                 }),
                 
                 TextButton.icon(
                   onPressed: () {
-                    // Simulação de adição de serviço
-                    setState(() => _controller.adicionarServico(
+                    setState(() => _itensSelecionados.add(
                       Servico(id: 1, descricao: "Manutenção Preventiva", preco: 150.0)
                     ));
                   },
@@ -137,46 +180,26 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
 
                 const SizedBox(height: 24),
-
-                CustomTextField(
-                  controller: _obsController,
-                  label: "Observações Gerais",
-                  prefixIcon: AppIcons.notes,
-                ),
-
+                CustomTextField(controller: _obsController, label: "Observações Gerais", prefixIcon: AppIcons.notes),
                 const SizedBox(height: 16),
-
-                CustomTextField(
-                  controller: _pecasController,
-                  label: "Peças Aplicadas",
-                  prefixIcon: AppIcons.build,
-                ),
-
+                CustomTextField(controller: _pecasController, label: "Peças Aplicadas", prefixIcon: AppIcons.build),
                 const SizedBox(height: 16),
-
                 CustomTextField(
-                  controller: _valorPecasController,
-                  label: "Valor Total das Peças",
+                  controller: _valorPecasController, 
+                  label: "Valor Total das Peças", 
                   prefixIcon: AppIcons.money,
                   keyboardType: TextInputType.number,
                 ),
 
-                const SizedBox(height: 32),
-
-                //WIDGET PARA TIRAR FOTOS ANTES E DEPOIS
                 const SizedBox(height: 24),
                 const Text("Evidências Fotográficas", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    // Foto Antes
                     Expanded(
-                      child: _controller.pathFotoAntes == null 
+                      child: _pathFotoAntes == null 
                         ? ElevatedButton.icon(
-                            onPressed: () async {
-                              await _controller.capturarFoto(true);
-                              setState(() {}); // Atualiza para mostrar o preview
-                            },
+                            onPressed: () => _capturarFoto(true),
                             icon: const Icon(AppIcons.camera),
                             label: const Text("Foto Antes"),
                           )
@@ -184,24 +207,20 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                             children: [
                               AspectRatio(
                                 aspectRatio: 1,
-                                child: Image.file(File(_controller.pathFotoAntes!), fit: BoxFit.cover),
+                                child: Image.file(File(_pathFotoAntes!), fit: BoxFit.cover),
                               ),
                               TextButton(
-                                onPressed: () => setState(() => _controller.pathFotoAntes = null),
+                                onPressed: () => setState(() => _pathFotoAntes = null),
                                 child: const Text("Remover", style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),
                     ),
                     const SizedBox(width: 16),
-                    // Foto Depois
                     Expanded(
-                      child: _controller.pathFotoDepois == null 
+                      child: _pathFotoDepois == null 
                         ? ElevatedButton.icon(
-                            onPressed: () async {
-                              await _controller.capturarFoto(false);
-                              setState(() {});
-                            },
+                            onPressed: () => _capturarFoto(false),
                             icon: const Icon(AppIcons.camera),
                             label: const Text("Foto Depois"),
                           )
@@ -209,10 +228,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                             children: [
                               AspectRatio(
                                 aspectRatio: 1,
-                                child: Image.file(File(_controller.pathFotoDepois!), fit: BoxFit.cover),
+                                child: Image.file(File(_pathFotoDepois!), fit: BoxFit.cover),
                               ),
                               TextButton(
-                                onPressed: () => setState(() => _controller.pathFotoDepois = null),
+                                onPressed: () => setState(() => _pathFotoDepois = null),
                                 child: const Text("Remover", style: TextStyle(color: Colors.red)),
                               ),
                             ],
@@ -221,40 +240,37 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   ],
                 ),
 
-                //WIDGET DA ASSINATURA
                 const SizedBox(height: 24),
                 const Text("Assinatura do Cliente", style: AppTextStyles.h3),
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: AppColors.border),
-                    color: AppColors.light, // [cite: 549]
+                    color: AppColors.light,
                   ),
                   child: Signature(
-                    controller: _controller.signatureController,
+                    controller: _signatureController,
                     height: 150,
                     backgroundColor: AppColors.light,
-                  ), // [cite: 512-515]
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextButton.icon(
-                      onPressed: () => setState(() => _controller.limparAssinatura()),
+                      onPressed: _limparAssinatura,
                       icon: const Icon(AppIcons.clear, color: AppColors.danger),
                       label: const Text("Limpar", style: TextStyle(color: AppColors.danger)),
                     ),
                     TextButton.icon(
-                      onPressed: () async {
-                        await _controller.exportarAssinatura();
-                        setState(() {}); // Bloqueia ou mostra preview se desejar
-                      },
+                      onPressed: _exportarAssinatura,
                       icon: const Icon(AppIcons.check, color: AppColors.success),
                       label: const Text("Confirmar Assinatura", style: TextStyle(color: AppColors.success)),
                     ),
                   ],
                 ),
 
+                const SizedBox(height: 24),
                 CustomPrimaryButton(
                   text: 'FINALIZAR E SALVAR',
                   icon: AppIcons.save,

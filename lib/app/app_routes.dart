@@ -33,6 +33,14 @@ import 'modules/tecnicos/tecnico.repository.dart';
 import 'modules/tecnicos/presentation/pages/tecnicos_list_page.dart';
 import 'modules/tecnicos/presentation/pages/tecnico_form_page.dart';
 
+// Importações das classes relacionadas à Ordem de Serviço
+import 'modules/ordens_servico/ordem_servico.repository.dart';
+import 'modules/ordens_servico/ordem_servico.validation.dart';
+import 'modules/ordens_servico/ordem_servico.service.dart';
+import 'modules/ordens_servico/presentation/pages/ordens_servico_list_page.dart';
+import 'modules/ordens_servico/presentation/pages/ordem_servico_form_page.dart';
+import 'modules/dashboard/presentation/pages/dashboard_page.dart';
+
 class AppRoutes {
   static const splash = '/splash';
   static const login = '/auth/login';
@@ -41,6 +49,7 @@ class AppRoutes {
   static const ordensServico = '/ordens-servico';
   static const relatorios = '/relatorios';
   static const novaOs = '/nova-os';
+  static const dashboard = '/dashboard';
   static const buscar = '/buscar';
   static const pendentes = '/pendentes';
   static const configuracoes = '/configuracoes';
@@ -67,14 +76,25 @@ class AppRoutes {
           final service = ClienteService(validation, repository);
           return ClientesListPage(service);
         },
-        ordensServico: (_) => const OrdensServicoPage(),
+        //Substituição do placeholder pela listagem real de Ordens de Serviço
+        ordensServico: (_) {
+          final repo = OrdemServicoRepository();
+          final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
+          return OrdensServicoListPage(service);
+        },
         relatorios: (_) => const RelatoriosPage(),
-        novaOs: (_) => const EmDesenvolvimentoPage(
-              titulo: 'Nova Ordem de Serviço',
-              icone: Icons.add_business,
-              cor: Colors.blue,
-              descricao: 'Funcionalidade de criar nova OS em desenvolvimento',
-            ),
+        // Substituição do placeholder pelo formulário real de O.S.
+        novaOs: (_) {
+          final repo = OrdemServicoRepository();
+          final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
+          return OrdemServicoFormPage(service);
+        },
+        // Vinculação da nova tela de Dashboard Gerencial
+        dashboard: (_) {
+          final repo = OrdemServicoRepository();
+          final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
+          return DashboardPage(service);
+        },
         buscar: (_) => const EmDesenvolvimentoPage(
               titulo: 'Buscar',
               icone: Icons.search,
