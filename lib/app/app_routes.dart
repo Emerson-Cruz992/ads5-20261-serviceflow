@@ -16,6 +16,8 @@ import 'shared/pages/em_desenvolvimento_page.dart';
 import 'modules/clientes/client.repository.dart';
 import 'modules/clientes/cliente.service.dart';
 import 'modules/clientes/cliente.validation.dart';
+import 'modules/clientes/presentation/pages/cliente_form_page.dart';
+import 'modules/clientes/cliente.model.dart';
 
 //importacoes das classes relacionados ao servico.model
 import 'package:serviceflow/app/modules/servicos/servico.model.dart';
@@ -70,12 +72,30 @@ class AppRoutes {
         splash: (_) => const SplashPage(),
         login: (_) => const LoginPage(),
         home: (_) => const HomePage(),
+
+        //Rotas concernentes aos clientes
         clientes: (_) {
           final repository = ClienteRepository();
           final validation = ClienteValidation(repository);
           final service = ClienteService(validation, repository);
           return ClientesListPage(service);
         },
+        // Rota para criação de novo cliente
+        '/cliente/novo': (_) {
+          final repository = ClienteRepository();
+          final validation = ClienteValidation(repository);
+          final service = ClienteService(validation, repository);
+          return ClienteFormPage(service);
+        },
+        // Rota para edição de cliente existente extraindo o argumento do envelope
+        '/cliente/editar': (context) {
+          final repository = ClienteRepository();
+          final validation = ClienteValidation(repository);
+          final service = ClienteService(validation, repository);
+          final cliente = ModalRoute.of(context)!.settings.arguments as Cliente;
+          return ClienteFormPage(service, clienteParaEdicao: cliente);
+        },
+
         //Substituição do placeholder pela listagem real de Ordens de Serviço
         ordensServico: (_) {
           final repo = OrdemServicoRepository();
