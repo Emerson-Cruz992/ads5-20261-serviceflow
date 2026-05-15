@@ -13,9 +13,9 @@ class OrdemServicoService extends BaseService<OrdemServico, OrdemServicoReposito
   OrdemServicoService(OrdemServicoValidation validation, OrdemServicoRepository repository)
       : super(validation, repository);
 
+  // Cria uma nova instância preservando os dados e injetando o ID gerado
   @override
-  OrdemServico cloneModelWithId(OrdemServico model, int id) {
-    // Cria uma nova instância preservando os dados e injetando o ID gerado
+  OrdemServico cloneModelWithId(OrdemServico model, int id) {    
     return OrdemServico(
       id: id,
       createdAt: DateTime.now(),
@@ -35,4 +35,23 @@ class OrdemServicoService extends BaseService<OrdemServico, OrdemServicoReposito
   Future<List<OrdemServico>> listarPorCliente(int clienteId) async {
     return await repository.findByCliente(clienteId);
   }
+
+  //Método que será responsável pela extração de métricas, diretamente do repositório
+  Future<Map<String, dynamic>> obterMetricasDashboard() async {
+    final todas = await repository.findAll();
+    
+    // Cálculo de faturamento total
+    double faturamento = todas.fold(0, (sum, os) => sum + os.valorTotal);
+    
+    // Contagem por status de sincronização
+    int pendentesSync = todas.where((os) => os.isSync == 0).length;
+    int sincronizadas = todas.where((os) => os.isSync == 1).length;
+
+    return {
+      'total_os': todas.length,
+      'faturamento_total': faturamento,
+      'pendentes_sync': pendentesSync,
+      'sincronizadas': sincronizadas,
+    };
+}
 }
