@@ -5,7 +5,8 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dar
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:flutter/services.dart'; 
+import 'dart:developer' as developer;
 import 'package:serviceflow/app/modules/clientes/client.repository.dart';
 import 'package:serviceflow/app/modules/tecnicos/tecnico.repository.dart';
 
@@ -55,11 +56,15 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
         _clienteExibicao = "${clienteAlvo.nome} (ID: ${clienteAlvo.id})";
         _tecnicoExibicao = "${tecnicoAlvo.nome} (ID: ${tecnicoAlvo.id})";
       });
-    } catch (e) {
-      setState(() {
-        _clienteExibicao = "Cliente Desconhecido (ID: ${_ordemAtual.clienteId})";
-        _tecnicoExibicao = "Técnico Desconhecido (ID: ${_ordemAtual.tecnicoId})";
-      });
+    } catch (e, stackTrace) {
+      // Proibido silenciar: O log registra o porquê de o cliente não ter sido localizado no SQLite
+      developer.log(
+        'Inconsistência relacional: O.S. aponta para cliente inexistente',
+        error: e,
+        stackTrace: stackTrace,
+        name: 'ServiceFlow.Database'
+      );
+      setState(() { _clienteExibicao = "Cliente Indisponível (Erro de Vínculo)"; });
     }
   }
 

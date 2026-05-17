@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/services.dart'; // Obrigatório para capturar a exceção PlatformException
+import 'dart:developer' as developer;
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.model.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
@@ -83,8 +85,15 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
         _tecnicosDisponiveis = tecnicos.where((t) => t.ativo).toList();
         _servicosDisponiveis = servicos.where((s) => s.ativo).toList();
       });
-    } catch (e) {
-      _controller.showError(context, "Erro ao carregar dados dos cadastros de apoio.");
+    } catch (e, stackTrace) {
+      // REGRA: Proibido silenciar. Registra o erro físico do banco de dados local com a StackTrace
+      developer.log(
+        'Falha ao ler tabelas de apoio (Clientes/Técnicos/Serviços) no SQLite',
+        error: e,
+        stackTrace: stackTrace,
+        name: 'ServiceFlow.OrdemServico',
+      );
+      _controller.showError(context, "Erro de infraestrutura ao carregar tabelas de apoio.");
     }
   }
 
