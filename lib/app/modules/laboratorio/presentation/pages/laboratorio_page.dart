@@ -13,11 +13,11 @@ class LaboratorioPage extends StatefulWidget {
 }
 
 class _LaboratorioPageState extends State<LaboratorioPage> {
-  // Estado dos testes de Câmera
+  // Estado dos testes de Câmera preservado integralmente
   String? _pathFotoTeste;
   final ImagePicker _picker = ImagePicker();
 
-  // Estado dos testes de Assinatura
+  // Estado dos testes de Assinatura preservado integralmente
   late SignatureController _signatureController;
   Uint8List? _assinaturaBytes;
 
@@ -26,7 +26,7 @@ class _LaboratorioPageState extends State<LaboratorioPage> {
     super.initState();
     _signatureController = SignatureController(
       penStrokeWidth: 3,
-      penColor: Colors.purple,
+      penColor: AppColors.primary, // Ajustado para usar o token de cor padrão
       exportBackgroundColor: Colors.white,
     );
   }
@@ -51,90 +51,95 @@ class _LaboratorioPageState extends State<LaboratorioPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Laboratório de Hardware & Dados')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text("Inspeção de Dados Locais", style: AppTextStyles.h3),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             
-            // Custom Card solicitado para selecionar e navegar até a listagem de usuários
+            // Componente homologado da biblioteca para seleção e navegação
             CustomMenuCard(
               title: 'Tabela de Usuários',
               description: 'Listar credenciais gravadas no SQLite',
               icon: Icons.supervised_user_circle,
-              color: Colors.purple,
+              color: AppColors.primary, // Ajustado para token de design consistente
               onTap: () => Navigator.pushNamed(context, '/laboratorio/usuarios'),
             ),
             
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
             const Text("Testes Nativos de Hardware", style: AppTextStyles.h3),
             const SizedBox(height: 16),
             
-            // Preservação do Bloco Original de Câmera
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    const ListTile(
-                      leading: Icon(AppIcons.camera, color: Colors.purple),
-                      title: Text("Módulo de Captura (Câmera)"),
-                      subtitle: Text("Validação de Platform Channels e permissões"),
-                    ),
-                    if (_pathFotoTeste != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Image.file(File(_pathFotoTeste!), height: 120, fit: BoxFit.cover),
-                      ),
-                    ElevatedButton(
-                      onPressed: _testarCamera,
-                      child: const Text("Disparar Câmera de Testes"),
-                    ),
-                  ],
+            // Seção de Câmera - Refatorada sem Card nativo e com botões homologados
+            Text("Módulo de Captura (Câmera)", style: AppTextStyles.h4),
+            const SizedBox(height: 4),
+            const Text("Validação de Platform Channels e permissões do sistema", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            if (_pathFotoTeste != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.file(File(_pathFotoTeste!), fit: BoxFit.cover),
                 ),
               ),
+            CustomPrimaryButton(
+              text: "Disparar Câmera de Testes",
+              icon: AppIcons.camera,
+              onPressed: _testarCamera,
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             
-            // Preservação do Bloco Original de Assinatura por Gesto
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    const ListTile(
-                      leading: Icon(Icons.gesture, color: Colors.purple),
-                      title: Text("Módulo de Assinatura (Canvas)"),
-                      subtitle: Text("Conversão de entrada gestual em stream PNG"),
-                    ),
-                    Container(
-                      color: Colors.grey[200],
-                      child: Signature(controller: _signatureController, height: 100),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () => _signatureController.clear(),
-                          child: const Text("Limpar"),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            final bytes = await _signatureController.toPngBytes();
-                            setState(() => _assinaturaBytes = bytes);
-                          },
-                          child: const Text("Capturar Bytes"),
-                        ),
-                      ],
-                    ),
-                    if (_assinaturaBytes != null)
-                      const Text("✔ Stream de bytes gerada com sucesso!", style: TextStyle(color: Colors.green)),
-                  ],
-                ),
+            // Seção de Assinatura - Refatorada removendo decorações manuais e botões nativos
+            Text("Módulo de Assinatura (Canvas)", style: AppTextStyles.h4),
+            const SizedBox(height: 4),
+            const Text("Conversão de entrada gestual em stream binária PNG", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                color: AppColors.light, // Uso obrigatório de token de cor de fundo
+              ),
+              child: Signature(
+                controller: _signatureController, 
+                height: 120,
+                backgroundColor: AppColors.light,
               ),
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomPrimaryButton(
+                    text: "Limpar Canvas",
+                    icon: AppIcons.clear,
+                    onPressed: () => _signatureController.clear(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomPrimaryButton(
+                    text: "Capturar Bytes",
+                    icon: AppIcons.check,
+                    onPressed: () async {
+                      final bytes = await _signatureController.toPngBytes();
+                      setState(() => _assinaturaBytes = bytes);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            if (_assinaturaBytes != null)
+              const Padding(
+                padding: EdgeInsets.only(top: 12.0),
+                child: Text(
+                  "✔ Stream de bytes gerada com sucesso!", 
+                  style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
           ],
         ),
       ),

@@ -6,7 +6,6 @@ import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/
 import 'package:serviceflow/app/shared/widgets/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Inclusão dos repositórios para consulta dos nomes reais
 import 'package:serviceflow/app/modules/clientes/client.repository.dart';
 import 'package:serviceflow/app/modules/tecnicos/tecnico.repository.dart';
 
@@ -26,11 +25,9 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
   late final OrdemServicoController _controller;
   late final OrdemServico _ordemAtual;
 
-  // Repositórios locais para busca de dados de apoio
   final ClienteRepository _clienteRepo = ClienteRepository();
   final TecnicoRepository _tecnicoRepo = TecnicoRepository();
 
-  // Variáveis de estado para armazenar os nomes amigáveis
   String _clienteExibicao = "Carregando...";
   String _tecnicoExibicao = "Carregando...";
 
@@ -41,30 +38,25 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
     _ordemAtual = widget.ordem;
     _pathFotoDepois = _ordemAtual.fotoDepois;
 
-    // Agendamento pós-frame para buscar os nomes com total segurança
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _buscarNomesDeApoio();
     });
   }
 
-  /// Método assíncrono para resolver as chaves estrangeiras e capturar os nomes reais
   Future<void> _buscarNomesDeApoio() async {
     try {
       final clientes = await _clienteRepo.findAll();
       final tecnicos = await _tecnicoRepo.findAll();
 
-      // Encontra as entidades correspondentes pelos IDs da O.S.
       final clienteAlvo = clientes.firstWhere((c) => c.id == _ordemAtual.clienteId);
       final tecnicoAlvo = tecnicos.firstWhere((t) => t.id == _ordemAtual.tecnicoId);
 
       setState(() {
-        // Formatação solicitada: Primeiro o Nome e depois o ID entre parênteses
         _clienteExibicao = "${clienteAlvo.nome} (ID: ${clienteAlvo.id})";
         _tecnicoExibicao = "${tecnicoAlvo.nome} (ID: ${tecnicoAlvo.id})";
       });
     } catch (e) {
       setState(() {
-        // Fallback de segurança caso o registro tenha sido removido
         _clienteExibicao = "Cliente Desconhecido (ID: ${_ordemAtual.clienteId})";
         _tecnicoExibicao = "Técnico Desconhecido (ID: ${_ordemAtual.tecnicoId})";
       });
@@ -93,7 +85,6 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
       return;
     }
 
-    // CORREÇÃO: Alinhamento de propriedades e manutenção estável do tipo de status ativo
     final ordemFinalizada = OrdemServico(
       id: _ordemAtual.id,
       clienteId: _ordemAtual.clienteId,
@@ -105,8 +96,8 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
       fotoAntes: _ordemAtual.fotoAntes,
       fotoDepois: _pathFotoDepois,
       assinatura: _ordemAtual.assinatura,
-      ativo: _ordemAtual.ativo, // Mantém compatibilidade com o tipo primitivo original
-      isSync: 0, // Indica modificação offline pendente de envio para a nuvem
+      ativo: _ordemAtual.ativo, 
+      isSync: 0, 
     );
 
     final sucesso = await _controller.finalizarOrdemServico(context, ordemFinalizada);
@@ -124,22 +115,21 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
           children: [
             const Text("Resumo do Atendimento", style: AppTextStyles.h3),
             const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Exibição amigável e dinâmica dos nomes de apoio processados
-                    Text("Cliente: $_clienteExibicao"),
-                    const SizedBox(height: 6),
-                    Text("Técnico: $_tecnicoExibicao"),
-                    const SizedBox(height: 6),
-                    Text("Peças: ${_ordemAtual.pecasAplicadas ?? 'Nenhuma peça informada'}"),
-                    const SizedBox(height: 6),
-                    Text("Valor das Peças: R\$ ${_ordemAtual.valorPecas.toStringAsFixed(2)}"),
-                  ],
-                ),
+            
+            // CORREÇÃO: Utilização do CustomListCard homologado no lugar do Card nativo do Flutter
+            CustomListCard(
+              isActive: _ordemAtual.ativo,
+              title: Text("Cliente: $_clienteExibicao"),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text("Técnico: $_tecnicoExibicao"),
+                  const SizedBox(height: 4),
+                  Text("Peças: ${_ordemAtual.pecasAplicadas ?? 'Nenhuma peça informada'}"),
+                  const SizedBox(height: 4),
+                  Text("Valor das Peças: R\$ ${_ordemAtual.valorPecas.toStringAsFixed(2)}"),
+                ],
               ),
             ),
             
@@ -156,11 +146,13 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
             const SizedBox(height: 24),
             const Text("Conclusão do Trabalho (Depois)", style: AppTextStyles.h3),
             const SizedBox(height: 12),
+            
+            // CORREÇÃO: Uso obrigatório do CustomPrimaryButton para ações de foto da entrega
             _pathFotoDepois == null
-                ? ElevatedButton.icon(
+                ? CustomPrimaryButton(
+                    text: "Registrar Entrega (Foto Depois)",
+                    icon: AppIcons.camera,
                     onPressed: _capturarFotoDepois,
-                    icon: const Icon(AppIcons.camera),
-                    label: const Text("Registrar Entrega (Foto Depois)"),
                   )
                 : Column(
                     children: [
@@ -168,11 +160,14 @@ class _OrdemServicoDetalhesPageState extends State<OrdemServicoDetalhesPage> {
                         aspectRatio: 16 / 9,
                         child: Image.file(File(_pathFotoDepois!), fit: BoxFit.cover),
                       ),
-                      if (_ordemAtual.ativo)
-                        TextButton(
+                      if (_ordemAtual.ativo) ...[
+                        const SizedBox(height: 8),
+                        CustomPrimaryButton(
+                          text: "Substituir Foto Tirada",
+                          icon: AppIcons.clear,
                           onPressed: () => setState(() => _pathFotoDepois = null),
-                          child: const Text("Substituir Foto", style: TextStyle(color: Colors.red)),
                         ),
+                      ],
                     ],
                   ),
 

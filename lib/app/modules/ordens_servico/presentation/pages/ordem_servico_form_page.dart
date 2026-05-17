@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'dart:typed_data'; // Essencial para o Uint8List
+import 'dart:typed_data';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.model.dart';
 import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.service.dart';
 import 'package:serviceflow/app/modules/ordens_servico/presentation/controllers/ordem_servico.controller.dart';
@@ -9,7 +9,6 @@ import 'package:serviceflow/app/shared/widgets/widgets.dart';
 import 'package:signature/signature.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Inclusão dos repositórios e modelos necessários para as consultas reais do banco
 import 'package:serviceflow/app/modules/clientes/client.repository.dart';
 import 'package:serviceflow/app/modules/clientes/cliente.model.dart';
 import 'package:serviceflow/app/modules/tecnicos/tecnico.repository.dart';
@@ -30,12 +29,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   final _pecasController = TextEditingController();
   final _valorPecasController = TextEditingController();
 
-  // Instanciação dos repositórios para acesso direto aos dados locais
   final ClienteRepository _clienteRepo = ClienteRepository();
   final TecnicoRepository _tecnicoRepo = TecnicoRepository();
   final ServicoRepository _servicoRepo = ServicoRepository();
 
-  // Coleções dinâmicas que alimentarão os seletores da interface
   List<Cliente> _clientesDisponiveis = [];
   List<Tecnico> _tecnicosDisponiveis = [];
   List<Servico> _servicosDisponiveis = [];
@@ -57,11 +54,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     _controller = OrdemServicoController(widget.service);
     _signatureController = SignatureController(
       penStrokeWidth: 3,
-      penColor: Colors.black,
+      penColor: AppColors.primary, // Ajustado para o token de cor correto
       exportBackgroundColor: Colors.white,
     );
 
-    // Dispara a carga assíncrona dos registros reais logo após o desenho do layout básico
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarDadosDeApoio();
     });
@@ -76,7 +72,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     super.dispose();
   }
 
-  /// Consulta as tabelas do SQLite filtrando apenas as entidades ativas no sistema
   Future<void> _carregarDadosDeApoio() async {
     try {
       final clientes = await _clienteRepo.findAll();
@@ -93,7 +88,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     }
   }
 
-  /// Apresenta uma caixa de diálogo contendo os serviços ativos do catálogo de preços
   void _exibirSeletorServicos() {
     if (_servicosDisponiveis.isEmpty) {
       _controller.showError(context, "Nenhum serviço ativo encontrado no catálogo.");
@@ -201,7 +195,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     );
 
     final sucesso = await _controller.salvarNovaOrdem(context, novaOS);
-
     if (sucesso) Navigator.pop(context, true);
   }
 
@@ -220,7 +213,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 const Text("Dados Principais", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
                 
-                // Campo dinâmico e real para seleção do Cliente cadastrado
                 DropdownButtonFormField<int>(
                   value: _clienteId,
                   decoration: const InputDecoration(
@@ -239,7 +231,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 
                 const SizedBox(height: 16),
 
-                // Campo dinâmico e real para seleção do Técnico cadastrado
                 DropdownButtonFormField<int>(
                   value: _tecnicoId,
                   decoration: const InputDecoration(
@@ -264,17 +255,18 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                     title: Text(entry.value.descricao),
                     subtitle: Text("R\$ ${entry.value.preco}"),
                     trailing: IconButton(
-                      icon: const Icon(Icons.remove_circle, color: Colors.red),
+                      icon: const Icon(Icons.remove_circle, color: AppColors.danger),
                       onPressed: () => setState(() => _itensSelecionados.removeAt(entry.key)),
                     ),
                   );
                 }),
                 
-                // Botão reconfigurado para acionar a busca real de serviços ativos no catálogo
-                TextButton.icon(
+                const SizedBox(height: 8),
+                // CORREÇÃO: Uso do componente homologado em substituição ao TextButton.icon
+                CustomPrimaryButton(
+                  text: "Adicionar Serviço ao Histórico",
+                  icon: Icons.add,
                   onPressed: _exibirSeletorServicos,
-                  icon: const Icon(Icons.add),
-                  label: const Text("Adicionar Serviço"),
                 ),
 
                 const SizedBox(height: 24),
@@ -293,11 +285,12 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 const Text("Evidência Fotográfica Inicial", style: AppTextStyles.h3),
                 const SizedBox(height: 16),
                 
+                // CORREÇÃO: Uso do componente homologado para disparo da câmera
                 _pathFotoAntes == null 
-                  ? ElevatedButton.icon(
+                  ? CustomPrimaryButton(
+                      text: "Registrar Estado Inicial (Antes)",
+                      icon: AppIcons.camera,
                       onPressed: _capturarFoto,
-                      icon: const Icon(AppIcons.camera),
-                      label: const Text("Registrar Estado Inicial (Antes)"),
                     )
                   : Column(
                       children: [
@@ -305,9 +298,11 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                           aspectRatio: 16 / 9,
                           child: Image.file(File(_pathFotoAntes!), fit: BoxFit.cover),
                         ),
-                        TextButton(
+                        const SizedBox(height: 8),
+                        CustomPrimaryButton(
+                          text: "Remover Foto Registrada",
+                          icon: AppIcons.clear,
                           onPressed: () => setState(() => _pathFotoAntes = null),
-                          child: const Text("Remover Foto", style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),
@@ -326,18 +321,24 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                     backgroundColor: AppColors.light,
                   ),
                 ),
+                const SizedBox(height: 12),
+                // CORREÇÃO: Linha de botões adaptada estritamente para os componentes da biblioteca
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    TextButton.icon(
-                      onPressed: _limparAssinatura,
-                      icon: const Icon(AppIcons.clear, color: AppColors.danger),
-                      label: const Text("Limpar", style: TextStyle(color: AppColors.danger)),
+                    Expanded(
+                      child: CustomPrimaryButton(
+                        text: "Limpar",
+                        icon: AppIcons.clear,
+                        onPressed: _limparAssinatura,
+                      ),
                     ),
-                    TextButton.icon(
-                      onPressed: _exportarAssinatura,
-                      icon: const Icon(AppIcons.check, color: AppColors.success),
-                      label: const Text("Confirmar Assinatura", style: TextStyle(color: AppColors.success)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CustomPrimaryButton(
+                        text: "Confirmar",
+                        icon: AppIcons.check,
+                        onPressed: _exportarAssinatura,
+                      ),
                     ),
                   ],
                 ),

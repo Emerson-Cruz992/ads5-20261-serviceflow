@@ -10,9 +10,10 @@ import 'package:serviceflow/app/modules/ordens_servico/ordem_servico.validation.
  * atribuído ao modelo após a criação.
  */
 class OrdemServicoService extends BaseService<OrdemServico, OrdemServicoRepository, OrdemServicoValidation> {
+  
   OrdemServicoService(OrdemServicoValidation validation, OrdemServicoRepository repository)
       : super(validation, repository);
-
+  
   // Cria uma nova instância preservando os dados e injetando o ID gerado
   @override
   OrdemServico cloneModelWithId(OrdemServico model, int id) {    
@@ -53,5 +54,19 @@ class OrdemServicoService extends BaseService<OrdemServico, OrdemServicoReposito
       'pendentes_sync': pendentesSync,
       'sincronizadas': sincronizadas,
     };
+  }
+  
 }
+
+/// DTO para encapsular os indicadores consolidados do painel gerencial
+class DashboardMetrics {
+  final int totalAbertas;
+  final double faturamentoConcluido;
+  final int pendentesSincronizacao;
+
+  DashboardMetrics({
+    required this.totalAbertas,
+    required this.faturamentoConcluido,
+    required this.pendentesSincronizacao,
+  });
 }
