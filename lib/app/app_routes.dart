@@ -128,11 +128,11 @@ class AppRoutes {
           return OrdemServicoFormPage(service);
         },
         // Vinculação da nova tela de Dashboard Gerencial
-        dashboard: (_) {
-          final repo = OrdemServicoRepository();
-          final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
-          return DashboardPage(service);
-        },
+        // dashboard: (_) {
+        //   final repo = OrdemServicoRepository();
+        //   final service = OrdemServicoService(OrdemServicoValidation(repo), repo);
+        //   return DashboardPage(service);
+        // },
         buscar: (_) => const EmDesenvolvimentoPage(
               titulo: 'Buscar',
               icone: Icons.search,
