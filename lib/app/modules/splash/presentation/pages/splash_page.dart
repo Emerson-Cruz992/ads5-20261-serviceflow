@@ -15,12 +15,34 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+/// Inclusão do SingleTickerProviderStateMixin para fornecer o VSync necessário ao controlador de animação
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
   Timer? _timer;
+  late final AnimationController _animationController;
+  late final Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    // 1. Configura o controlador para gerenciar a progressão do esmaecimento lentamente por 2.5 segundos
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+
+    // 2. Mapeia a interpolação linear para transicionar a opacidade de 0.0 (invisível) para 1.0 (visível)
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    // 3. Inicia o gatilho visual de esmaecimento do logotipo
+    _animationController.forward();
+
+    // 4. Executa a rotina nativa original de preparação do banco de dados local
     _initializeDatabase();
   }
 
@@ -90,29 +112,24 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _animationController.dispose(); // Libera os recursos do ticker de animação da memória
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color.fromARGB(255, 222, 231, 246),
+    return Scaffold(
+      // Customização 1: Plano de fundo alterado estritamente para a cor preta
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('ServiceFlow', style: TextStyle(fontSize: 20)),
-              SizedBox(height: 8),
-              Text('Carregando...'),
-              SizedBox(height: 35),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: AppLogo(width: double.infinity, height: 250),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            // Customizações 2 e 3: Envolve o logo no widget de transição controlado pela animação lenta
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: const AppLogo(width: double.infinity, height: 250),
+            ),
           ),
         ),
       ),
