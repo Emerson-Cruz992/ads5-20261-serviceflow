@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'app_routes.dart';
-import 'core/theme/app_theme.dart';
+import 'package:serviceflow/app/app_routes.dart';
+import 'package:serviceflow/app/core/theme/app_theme.dart'; // Importação do tema centralizado
 
 class AppWidget extends StatelessWidget {
   const AppWidget({super.key});
@@ -9,10 +9,14 @@ class AppWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ServiceFlow',
-      theme: AppTheme.light,
-      initialRoute: AppRoutes.splash,
-      routes: AppRoutes.routes,
+      
       debugShowCheckedModeBanner: false,
+            
+      themeMode: ThemeMode.dark,
+      darkTheme: AppTheme.dark,
+      
+      initialRoute: '/splash',
+      routes: AppRoutes.routes,
     );
   }
 }

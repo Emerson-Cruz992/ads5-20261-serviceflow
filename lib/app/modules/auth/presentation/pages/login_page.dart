@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> with MessagesMixin, LoaderMixin {
   Widget build(BuildContext context) {
     // Usando Scaffold e Padding para estruturar a tela
     return Scaffold(
-      backgroundColor: Colors.white, // O fundo branco destaca o logo
+      backgroundColor: Colors.black, // Fundo preto para manter a identidade visual escura
       body: Center(
         child: SingleChildScrollView(
           // Evita quebra de layout com teclado
