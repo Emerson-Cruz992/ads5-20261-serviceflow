@@ -15,7 +15,6 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-/// Inclusão do SingleTickerProviderStateMixin para fornecer o VSync necessário ao controlador de animação
 class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
   Timer? _timer;
   late final AnimationController _animationController;
@@ -25,13 +24,12 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     
-    // 1. Configura o controlador para gerenciar a progressão do esmaecimento lentamente por 2.5 segundos
+    // Inicializa o controlador para gerenciar a opacidade dentro do ciclo de vida da splash
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 1200),
     );
 
-    // 2. Mapeia a interpolação linear para transicionar a opacidade de 0.0 (invisível) para 1.0 (visível)
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -39,10 +37,10 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       ),
     );
 
-    // 3. Inicia o gatilho visual de esmaecimento do logotipo
+    // Dispara o efeito visual de entrada do logotipo
     _animationController.forward();
-
-    // 4. Executa a rotina nativa original de preparação do banco de dados local
+    
+    // Executa a inicialização nativa do banco de dados local
     _initializeDatabase();
   }
 
@@ -86,6 +84,12 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   void _checkAuthAndNavigate() async {
+    // Executa o fade-out esmaecendo a imagem antes de realizar a troca de tela
+    if (mounted) {
+      await _animationController.reverse();
+    }
+
+    if (!mounted) return;
     final authService = AuthService();
     
     try {
@@ -112,20 +116,18 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   @override
   void dispose() {
     _timer?.cancel();
-    _animationController.dispose(); // Libera os recursos do ticker de animação da memória
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Customização 1: Plano de fundo alterado estritamente para a cor preta
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            // Customizações 2 e 3: Envolve o logo no widget de transição controlado pela animação lenta
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: const AppLogo(width: double.infinity, height: 250),
