@@ -12,7 +12,7 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       // Define o plano de fundo escuro semântico para a estrutura da página
-      backgroundColor: ,
+      backgroundColor: theme.colorScheme.surfaceContainer,
       appBar: CustomGradientAppBar(
         title: 'ServiceFlow',
         onLogout: () => Navigator.pushReplacementNamed(context, '/auth/login'),
